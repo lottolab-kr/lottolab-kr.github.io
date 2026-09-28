@@ -55,9 +55,9 @@
   "strength": 2,
   "ads": {
     "top": {
-      "enabled": false,
-      "image": "",
-      "link": ""
+      "enabled": true,
+      "image": "ads/top.png",
+      "link": "https://smartstore.naver.com/ig__company"
     },
     "bottom": {
       "enabled": false,
