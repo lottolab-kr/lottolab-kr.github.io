@@ -1,0 +1,15 @@
+{
+  "name": "로또 넘버랩",
+  "short_name": "넘버랩",
+  "description": "번호별 출현 빈도를 반영해 중복 없는 10게임을 만들어 주는 로또 6/45 번호 생성기",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F6F8",
+  "theme_color": "#2454E0",
+  "lang": "ko",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

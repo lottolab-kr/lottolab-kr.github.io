@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>로또 넘버랩 관리자</title>
+<style>
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#FAFBFC; --border:#E1E4EA;
+  --text:#14171F; --text-muted:#6B7280; --text-faint:#9AA1AC;
+  --accent:#2454E0; --success:#178A5A; --success-weak:#E4F6EE;
+  --danger:#C43B3B; --danger-weak:#FBEAEA;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#12151B; --surface:#1B1F27; --surface-2:#20242D; --border:#2C313C; --text:#EDEFF3; --text-muted:#9AA3B2; --text-faint:#6B7280; }
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.55;}
+.page{max-width:760px;margin:0 auto;padding:28px 16px 48px;display:flex;flex-direction:column;gap:20px;}
+h1{font-size:22px;margin:0;}
+.lede{color:var(--text-muted);font-size:13.5px;margin:6px 0 0;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;}
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px 20px;}
+.status-item .label{font-size:12px;color:var(--text-faint);}
+.status-item .value{font-family:monospace;font-weight:700;font-size:15px;}
+.hint{font-size:12.5px;color:var(--text-faint);margin:0;}
+textarea{width:100%;font-family:monospace;font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);resize:vertical;}
+code{font-family:monospace;font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:5px;}
+.btn{font-family:inherit;font-weight:700;border-radius:10px;border:1px solid var(--border);padding:9px 15px;font-size:13.5px;cursor:pointer;background:var(--surface-2);color:var(--text);}
+.btn-primary{background:var(--accent);color:#fff;border-color:transparent;}
+.row{display:flex;gap:8px;flex-wrap:wrap;}
+.msg{border-radius:10px;padding:10px 12px;font-size:13px;}
+.msg.error{background:var(--danger-weak);color:var(--danger);}
+.msg.success{background:var(--success-weak);color:var(--success);}
+.msg ul{margin:6px 0 0;padding-left:18px;}
+.quick-row{display:flex;gap:8px;flex-wrap:wrap;}
+.quick-row input{font-family:monospace;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;color:var(--text);width:64px;text-align:center;}
+.quick-row input.wide{width:120px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>로또 넘버랩 관리자</h1>
+    <p class="lede">이 페이지는 검색엔진에 노출되지 않고, 배포된 데이터를 바꾸는 다운로드 파일을 만드는 로컬 도구입니다. 결과 파일을 저장소의 <code>data/draws.csv</code>에 반영(직접 커밋하거나 Claude에게 전달)해야 실제 사이트에 반영됩니다.</p>
+  </header>
+
+  <section class="panel">
+    <h2 style="margin:0;font-size:16px;">현재 배포된 데이터</h2>
+    <div class="status-grid" id="statusGrid"><span class="hint">불러오는 중…</span></div>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin:0;font-size:16px;">공식 결과 붙여넣기</h2>
+    <p class="hint">형식: <code>회차,추첨일,번호1,번호2,번호3,번호4,번호5,번호6,보너스</code> — 한 줄에 한 회차. 기존 데이터에 이어붙이며, 구간에 빠진 회차가 있으면 저장을 막습니다.</p>
+    <textarea id="csvInput" rows="8" placeholder="1244,2026-10-03,1,2,3,4,5,6,7"></textarea>
+    <div class="row">
+      <button class="btn btn-primary" id="mergeBtn">검증하고 병합 미리보기</button>
+      <button class="btn" id="clearBtn">지우기</button>
+    </div>
+    <div class="msg" id="msgBox" hidden></div>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin:0;font-size:16px;">회차 하나 빠르게 추가</h2>
+    <div class="quick-row">
+      <label>회차<br><input type="number" id="qDrwNo" min="1"></label>
+      <label>추첨일<br><input type="date" id="qDate" class="wide"></label>
+    </div>
+    <div class="quick-row">
+      <input type="number" min="1" max="45" id="qn1" placeholder="1">
+      <input type="number" min="1" max="45" id="qn2" placeholder="2">
+      <input type="number" min="1" max="45" id="qn3" placeholder="3">
+      <input type="number" min="1" max="45" id="qn4" placeholder="4">
+      <input type="number" min="1" max="45" id="qn5" placeholder="5">
+      <input type="number" min="1" max="45" id="qn6" placeholder="6">
+      <input type="number" min="1" max="45" id="qBonus" placeholder="보너스">
+    </div>
+    <div class="row"><button class="btn btn-primary" id="quickAddBtn">이 회차로 병합 미리보기 만들기</button></div>
+  </section>
+
+  <section class="panel" id="downloadPanel" hidden>
+    <h2 style="margin:0;font-size:16px;">병합 결과</h2>
+    <div class="status-grid" id="mergedStatusGrid"></div>
+    <p class="hint">아래 두 파일을 내려받아 저장소의 같은 이름 파일에 덮어쓰고 커밋 · 푸시하세요 (또는 두 파일을 Claude와의 대화에 첨부해 반영을 요청하세요).</p>
+    <div class="row">
+      <button class="btn btn-primary" id="downloadCsvBtn">draws.csv 다운로드</button>
+      <button class="btn btn-primary" id="downloadJsonBtn">data.json 다운로드</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var existingRows = [];
+  var mergedRows = null;
+
+  function isValidDateString(s){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(s || '')) return false;
+    var p = s.split('-').map(Number);
+    var dt = new Date(Date.UTC(p[0], p[1]-1, p[2]));
+    return dt.getUTCFullYear() === p[0] && dt.getUTCMonth() === p[1]-1 && dt.getUTCDate() === p[2];
+  }
+  function validateRowFields(drwNo, date, nums, bonus){
+    var errs = [];
+    if(!Number.isInteger(drwNo) || drwNo < 1) errs.push('회차는 1 이상의 정수여야 합니다.');
+    if(!isValidDateString(date)) errs.push('추첨일이 올바른 날짜가 아닙니다: "'+date+'"');
+    if(nums.length !== 6 || nums.some(function(n){ return !Number.isInteger(n) || n<1 || n>45; })) errs.push('본번호는 1~45 정수 6개여야 합니다.');
+    else if(new Set(nums).size !== 6) errs.push('본번호 6개가 서로 달라야 합니다.');
+    if(!Number.isInteger(bonus) || bonus<1 || bonus>45) errs.push('보너스는 1~45 정수여야 합니다.');
+    else if(nums.indexOf(bonus) !== -1) errs.push('보너스가 본번호와 중복됩니다.');
+    return errs;
+  }
+  function parseCsv(text){
+    var lines = text.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length>0; });
+    var rows = [], errors = [];
+    lines.forEach(function(line, i){
+      var cols = line.split(/[,\t]+/).map(function(c){ return c.trim(); });
+      if(!/^\d+$/.test(cols[0])) return;
+      if(cols.length < 9){ errors.push((i+1)+'번째 줄: 값이 9개 필요'); return; }
+      var drwNo = parseInt(cols[0],10), date = cols[1];
+      var nums = cols.slice(2,8).map(Number), bonus = Number(cols[8]);
+      var e = validateRowFields(drwNo, date, nums, bonus);
+      if(e.length){ errors.push((i+1)+'번째 줄(회차 '+drwNo+'): '+e.join(' / ')); return; }
+      rows.push({ drwNo:drwNo, date:date, nums:nums.slice().sort(function(a,b){return a-b;}), bonus:bonus });
+    });
+    return { rows: rows, errors: errors };
+  }
+  function mergeAndValidate(existing, newRows){
+    var map = {};
+    existing.forEach(function(d){ map[d.drwNo] = d; });
+    var dup = {};
+    newRows.forEach(function(r){ if(map[r.drwNo] && JSON.stringify(map[r.drwNo])!==JSON.stringify(r) && newRows.filter(function(x){return x.drwNo===r.drwNo;}).length>1) dup[r.drwNo]=true; map[r.drwNo]=r; });
+    var merged = Object.keys(map).map(function(k){ return map[k]; }).sort(function(a,b){ return a.drwNo-b.drwNo; });
+    var errors = [];
+    if(merged.length){
+      var minNo = merged[0].drwNo, maxNo = merged[merged.length-1].drwNo;
+      var missing = [];
+      for(var i=minNo;i<=maxNo;i++){ if(!map[i]) missing.push(i); }
+      if(missing.length) errors.push('구간 안에 누락된 회차: '+missing.slice(0,20).join(', '));
+    }
+    return { merged: merged, errors: errors, isComplete: merged.length ? merged[0].drwNo===1 : false };
+  }
+  function computeCounts(rows){
+    var counts = new Array(46).fill(0);
+    rows.forEach(function(d){ d.nums.forEach(function(n){ counts[n]++; }); });
+    return counts;
+  }
+  function rowsToCsv(rows){
+    var lines = ['drwNo,date,n1,n2,n3,n4,n5,n6,bonus'];
+    rows.forEach(function(d){ lines.push([d.drwNo, d.date].concat(d.nums, [d.bonus]).join(',')); });
+    return lines.join('\n') + '\n';
+  }
+  function download(filename, content, type){
+    var blob = new Blob([content], { type: type || 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+  }
+  function showMsg(type, lines){
+    var el = document.getElementById('msgBox');
+    el.hidden = false; el.className = 'msg ' + type;
+    el.innerHTML = lines.length===1 ? lines[0] : ('<ul>'+lines.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul>');
+  }
+  function renderStatus(gridId, rows){
+    var grid = document.getElementById(gridId);
+    if(!rows.length){ grid.innerHTML = '<span class="hint">데이터 없음</span>'; return; }
+    var first = rows[0], last = rows[rows.length-1];
+    grid.innerHTML =
+      '<div class="status-item"><span class="label">구간</span><br><span class="value">'+first.drwNo+'~'+last.drwNo+'회</span></div>' +
+      '<div class="status-item"><span class="label">회차 수</span><br><span class="value">'+rows.length+'</span></div>' +
+      '<div class="status-item"><span class="label">전체 여부</span><br><span class="value">'+(first.drwNo===1?'전체':'부분')+'</span></div>' +
+      '<div class="status-item"><span class="label">마지막 추첨일</span><br><span class="value">'+last.date+'</span></div>';
+  }
+
+  function handleNewRows(newRows, errorsSoFar){
+    if(errorsSoFar && errorsSoFar.length){ showMsg('error', errorsSoFar); return; }
+    if(!newRows.length){ showMsg('error', ['유효한 데이터가 없습니다.']); return; }
+    var result = mergeAndValidate(existingRows, newRows);
+    if(result.errors.length){ showMsg('error', result.errors); return; }
+    mergedRows = result.merged;
+    showMsg('success', ['병합 확인: 총 '+result.merged.length+'회차분 ('+result.merged[0].drwNo+'~'+result.merged[result.merged.length-1].drwNo+'회'+(result.isComplete?', 전체':', 부분 구간')+')']);
+    renderStatus('mergedStatusGrid', mergedRows);
+    document.getElementById('downloadPanel').hidden = false;
+  }
+
+  document.getElementById('mergeBtn').addEventListener('click', function(){
+    var parsed = parseCsv(document.getElementById('csvInput').value);
+    handleNewRows(parsed.rows, parsed.errors);
+  });
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    document.getElementById('csvInput').value = '';
+    document.getElementById('msgBox').hidden = true;
+  });
+  document.getElementById('quickAddBtn').addEventListener('click', function(){
+    var drwNo = parseInt(document.getElementById('qDrwNo').value, 10);
+    var date = document.getElementById('qDate').value;
+    var nums = ['qn1','qn2','qn3','qn4','qn5','qn6'].map(function(id){ return parseInt(document.getElementById(id).value, 10); });
+    var bonus = parseInt(document.getElementById('qBonus').value, 10);
+    var errs = validateRowFields(drwNo, date, nums, bonus);
+    handleNewRows([{ drwNo:drwNo, date:date, nums:nums.slice().sort(function(a,b){return a-b;}), bonus:bonus }], errs);
+  });
+  document.getElementById('downloadCsvBtn').addEventListener('click', function(){
+    if(!mergedRows) return;
+    download('draws.csv', rowsToCsv(mergedRows), 'text/csv');
+  });
+  document.getElementById('downloadJsonBtn').addEventListener('click', function(){
+    if(!mergedRows) return;
+    var counts = computeCounts(mergedRows);
+    var first = mergedRows[0], last = mergedRows[mergedRows.length-1];
+    var doc = {
+      counts: counts, minDrwNo: first.drwNo, maxDrwNo: last.drwNo, lastDate: last.date,
+      isComplete: first.drwNo === 1, asOf: new Date().toISOString(), strength: 2,
+      ads: { top: {enabled:false, image:'', link:''}, bottom: {enabled:false, image:'', link:''} }
+    };
+    download('data.json', JSON.stringify(doc, null, 2), 'application/json');
+  });
+
+  // load currently deployed draws.csv (works when served over http(s); fails silently under file://)
+  fetch('../data/draws.csv', { cache: 'no-store' })
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(function(text){
+      var parsed = parseCsv(text);
+      existingRows = parsed.rows;
+      renderStatus('statusGrid', existingRows);
+    })
+    .catch(function(err){
+      document.getElementById('statusGrid').innerHTML = '<span class="hint">기존 데이터를 불러오지 못했습니다 (' + err.message + '). 빈 상태로 시작합니다 — 전체 데이터를 붙여넣어 주세요.</span>';
+    });
+})();
+</script>
+</body>
+</html>

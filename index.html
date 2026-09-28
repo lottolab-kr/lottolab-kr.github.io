@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>로또 넘버랩</title>
+<meta name="description" content="번호별 출현 빈도를 반영해 중복 없는 10게임을 만들어 주는 로또 6/45 번호 생성기">
+<meta name="theme-color" content="#2454E0">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#FAFBFC; --border:#E1E4EA;
+  --text:#14171F; --text-muted:#6B7280; --text-faint:#9AA1AC;
+  --accent:#2454E0; --accent-strong:#173C9E; --accent-weak:#EAF0FE;
+  --ball-1-bg:#FBC400; --ball-1-fg:#3B2E00;
+  --ball-2-bg:#5EC2F2; --ball-2-fg:#04264A;
+  --ball-3-bg:#FF7272; --ball-3-fg:#4A0A0A;
+  --ball-4-bg:#AAAAAA; --ball-4-fg:#1E1E1E;
+  --ball-5-bg:#AED860; --ball-5-fg:#1F3300;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#12151B; --surface:#1B1F27; --surface-2:#20242D; --border:#2C313C;
+    --text:#EDEFF3; --text-muted:#9AA3B2; --text-faint:#6B7280;
+    --accent:#7C9CFF; --accent-strong:#AFC3FF; --accent-weak:#1E2A4D;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.55;}
+.page{max-width:640px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top, 0px)) 16px calc(40px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:16px;}
+h1,h2{font-family:'Gothic A1',-apple-system,sans-serif;margin:0;text-wrap:balance;}
+.eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;}
+h1{font-size:26px;font-weight:900;}
+.lede{margin:8px 0 0;color:var(--text-muted);font-size:13.5px;}
+
+.ad-slot{display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:12px;background:var(--surface-2);color:var(--text-faint);font-size:12px;min-height:72px;overflow:hidden;text-align:center;padding:8px;}
+.ad-slot img{max-width:100%;max-height:120px;border-radius:8px;display:block;}
+.ad-slot a{display:block;line-height:0;}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.status-line{font-size:12.5px;color:var(--text-faint);display:flex;flex-wrap:wrap;gap:4px 10px;}
+.status-line b{color:var(--text-muted);font-weight:700;}
+
+.btn{font-family:inherit;font-weight:700;border-radius:10px;border:1px solid transparent;padding:10px 16px;font-size:14px;cursor:pointer;}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{filter:brightness(1.06);}
+.btn-lg{padding:14px 20px;font-size:16px;width:100%;}
+.btn-ghost{background:transparent;color:var(--text-muted);border-color:var(--border);}
+.btn-ghost:hover{background:var(--surface-2);}
+
+.results{display:flex;flex-direction:column;gap:8px;}
+.game-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;}
+.game-label{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--text-muted);min-width:48px;}
+.game-balls{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
+.copy-line-btn{margin-left:auto;font-family:inherit;font-size:12.5px;font-weight:700;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);padding:5px 10px;cursor:pointer;}
+.copy-line-btn:hover{background:var(--surface);}
+.results-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.ball{display:inline-flex;align-items:center;justify-content:center;width:2.15rem;height:2.15rem;border-radius:50%;flex:0 0 auto;font:700 .82rem/1 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;}
+.ball-g1{background:var(--ball-1-bg);color:var(--ball-1-fg);}
+.ball-g2{background:var(--ball-2-bg);color:var(--ball-2-fg);}
+.ball-g3{background:var(--ball-3-bg);color:var(--ball-3-fg);}
+.ball-g4{background:var(--ball-4-bg);color:var(--ball-4-fg);}
+.ball-g5{background:var(--ball-5-bg);color:var(--ball-5-fg);}
+
+.disclaimer-inline{font-size:12.5px;color:var(--text-muted);background:var(--surface-2);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 8px 8px 0;margin:0;}
+
+.freq-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.freq-head h2{font-size:16px;font-weight:800;}
+.segmented{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.segmented button{font-family:inherit;font-size:12px;font-weight:700;border:none;background:var(--surface-2);color:var(--text-muted);padding:6px 12px;cursor:pointer;}
+.segmented button.active{background:var(--accent);color:#fff;}
+.freq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.freq-item{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;}
+.freq-item .rank{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);width:20px;flex:0 0 auto;}
+.freq-item .ball{width:1.85rem;height:1.85rem;font-size:.72rem;}
+.bar-track{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;min-width:20px;}
+.bar-fill{height:100%;background:var(--accent);border-radius:99px;}
+.freq-item .count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);white-space:nowrap;}
+
+.foot{border-top:1px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--text-faint);}
+.foot a{color:var(--accent);}
+
+@media (max-width:480px){ h1{font-size:22px;} .panel{padding:16px;} }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="ad-slot" id="adTop">광고 영역</div>
+
+  <header>
+    <p class="eyebrow">로또 6/45</p>
+    <h1>로또 넘버랩</h1>
+    <p class="lede">공식 당첨 데이터의 번호별 출현 빈도를 반영해 중복 없는 10게임을 만들어 드립니다.</p>
+  </header>
+
+  <section class="panel">
+    <button class="btn btn-primary btn-lg" id="genBtn">10게임 생성</button>
+    <div class="results" id="results"></div>
+    <div class="results-actions" id="resultsActions" hidden>
+      <button class="btn btn-ghost" id="copyAllBtn">10게임 전체 복사</button>
+    </div>
+    <p class="disclaimer-inline">추첨은 매회 독립적으로 진행됩니다. 과거에 자주 나온 번호가 많이 포함되어도 다음 회차 당첨 확률이 높아지는 것은 아닙니다.</p>
+    <p class="status-line" id="statusLine"></p>
+  </section>
+
+  <section class="panel">
+    <div class="freq-head">
+      <h2>번호별 출현 빈도</h2>
+      <div class="segmented" id="sortSeg">
+        <button type="button" data-sort="freq" class="active">빈도순</button>
+        <button type="button" data-sort="num">번호순</button>
+      </div>
+    </div>
+    <div class="freq-grid" id="freqGrid"></div>
+  </section>
+
+  <div class="ad-slot" id="adBottom">광고 영역</div>
+
+  <footer class="foot">
+    <p>이 도구는 과거 출현 빈도를 반영한 무작위 조합을 만들 뿐이며, 당첨을 예측하거나 보장하지 않습니다. 매 추첨은 이전 결과와 무관하게 독립적으로 진행됩니다.</p>
+    <p class="fine">만 19세 미만 구매 불가 · 과도한 구매에 주의하세요 · 도박문제 상담 1336</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DATA = null;
+  var sortMode = 'freq';
+  var lastGames = [];
+
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function ballGroup(n){ if(n<=10) return 1; if(n<=20) return 2; if(n<=30) return 3; if(n<=40) return 4; return 5; }
+  function ballHTML(n){ return '<span class="ball ball-g'+ballGroup(n)+'">'+pad2(n)+'</span>'; }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fmtDateTime(iso){
+    if(!iso) return '—';
+    try{ return new Date(iso).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }); }
+    catch(e){ return iso; }
+  }
+
+  function computeWeights(counts, strength){
+    var present = counts.slice(1,46);
+    var min = Math.min.apply(null, present);
+    var max = Math.max.apply(null, present);
+    var range = max - min;
+    var weights = [];
+    for(var n=1;n<=45;n++){
+      var w = range === 0 ? 1 : 1 + strength * ((counts[n]-min)/range);
+      weights.push({ num:n, weight:w });
+    }
+    return { weights: weights, min: min, max: max };
+  }
+  function weightedPickWithoutReplacement(weights, k){
+    var pool = weights.map(function(w){ return { num:w.num, weight:w.weight }; });
+    var picked = [];
+    for(var i=0;i<k;i++){
+      var total = pool.reduce(function(s,p){ return s+p.weight; }, 0);
+      var r = Math.random()*total;
+      var acc = 0, idx = -1;
+      for(var j=0;j<pool.length;j++){ acc += pool[j].weight; if(r <= acc){ idx = j; break; } }
+      if(idx === -1) idx = pool.length-1;
+      picked.push(pool[idx].num);
+      pool.splice(idx,1);
+    }
+    return picked.sort(function(a,b){ return a-b; });
+  }
+  function generateTenGames(weights){
+    var games = []; var seen = {}; var guard = 0;
+    while(games.length < 10 && guard < 1000){
+      guard++;
+      var g = weightedPickWithoutReplacement(weights, 6);
+      var key = g.join('-');
+      if(!seen[key]){ seen[key] = true; games.push(g); }
+    }
+    return games;
+  }
+
+  function renderAds(){
+    ['top','bottom'].forEach(function(pos){
+      var el = document.getElementById(pos === 'top' ? 'adTop' : 'adBottom');
+      var ad = DATA.ads && DATA.ads[pos];
+      if(ad && ad.enabled && ad.image){
+        var img = '<img src="'+ad.image+'" alt="광고" loading="lazy">';
+        el.innerHTML = ad.link ? ('<a href="'+escapeHtml(ad.link)+'" target="_blank" rel="noopener sponsored">'+img+'</a>') : img;
+      } else {
+        el.textContent = '광고 영역';
+      }
+    });
+  }
+  function renderStatus(){
+    document.getElementById('statusLine').innerHTML =
+      '<span><b>데이터 기준</b> '+DATA.minDrwNo+'~'+DATA.maxDrwNo+'회</span>' +
+      '<span><b>마지막 추첨일</b> '+escapeHtml(DATA.lastDate)+'</span>' +
+      '<span><b>업데이트</b> '+fmtDateTime(DATA.asOf)+'</span>';
+  }
+  function renderFrequency(){
+    var counts = DATA.counts;
+    var max = Math.max.apply(null, counts.slice(1,46));
+    var items = [];
+    for(var n=1;n<=45;n++){ items.push({ num:n, count: counts[n] }); }
+    if(sortMode === 'freq'){ items.sort(function(a,b){ return b.count-a.count || a.num-b.num; }); }
+    else { items.sort(function(a,b){ return a.num-b.num; }); }
+    document.getElementById('freqGrid').innerHTML = items.map(function(it, idx){
+      var pct = max > 0 ? Math.round((it.count/max)*100) : 0;
+      var rank = sortMode === 'freq' ? ('#'+(idx+1)) : '';
+      return '<div class="freq-item"><span class="rank">'+rank+'</span>' + ballHTML(it.num) +
+        '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div>' +
+        '<span class="count">'+it.count+'회</span></div>';
+    }).join('');
+  }
+  function renderResults(games){
+    lastGames = games;
+    var box = document.getElementById('results');
+    var actions = document.getElementById('resultsActions');
+    if(!games || games.length === 0){ box.innerHTML = ''; actions.hidden = true; return; }
+    box.innerHTML = games.map(function(g, i){
+      var line = (i+1)+'게임: ' + g.map(pad2).join(' · ');
+      return '<div class="game-row"><span class="game-label">'+(i+1)+'게임</span>' +
+        '<span class="game-balls">'+g.map(ballHTML).join('')+'</span>' +
+        '<button type="button" class="copy-line-btn" data-line="'+escapeHtml(line)+'">복사</button></div>';
+    }).join('');
+    actions.hidden = false;
+  }
+  function copyText(text, btn){
+    function flash(){
+      if(!btn) return;
+      var orig = btn.textContent;
+      btn.textContent = '복사됨'; btn.disabled = true;
+      setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 1200);
+    }
+    function fallback(){
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        flash();
+      }catch(e){}
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(flash).catch(fallback);
+    } else { fallback(); }
+  }
+
+  function wire(){
+    document.getElementById('genBtn').addEventListener('click', function(){
+      var info = computeWeights(DATA.counts, DATA.strength || 2);
+      renderResults(generateTenGames(info.weights));
+    });
+    document.getElementById('copyAllBtn').addEventListener('click', function(){
+      var text = lastGames.map(function(g,i){ return (i+1)+'게임: '+g.map(pad2).join(' · '); }).join('\n');
+      copyText(text, this);
+    });
+    document.getElementById('results').addEventListener('click', function(e){
+      var btn = e.target.closest('.copy-line-btn');
+      if(!btn) return;
+      copyText(btn.getAttribute('data-line'), btn);
+    });
+    document.getElementById('sortSeg').addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-sort]');
+      if(!btn) return;
+      sortMode = btn.getAttribute('data-sort');
+      Array.prototype.forEach.call(this.querySelectorAll('button'), function(b){ b.classList.toggle('active', b === btn); });
+      renderFrequency();
+    });
+  }
+
+  fetch('./data.json', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(json){
+      DATA = json;
+      renderAds();
+      renderStatus();
+      renderFrequency();
+      wire();
+      var info0 = computeWeights(DATA.counts, DATA.strength || 2);
+      renderResults(generateTenGames(info0.weights));
+    })
+    .catch(function(err){
+      document.getElementById('statusLine').textContent = '데이터를 불러오지 못했습니다: ' + err.message;
+      console.error(err);
+    });
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(e){ console.log('sw register failed', e); });
+    });
+  }
+})();
+</script>
+</body>
+</html>
