@@ -1,11 +1,12 @@
 // Minimal offline cache so the installed app still opens without a network
 // connection. data.json is deliberately network-first so a new deploy is
 // picked up right away instead of being stuck on a stale cached copy.
-const CACHE = 'lotto-numberlab-v1';
+const CACHE = 'lotto-numberlab-v2';
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './assets/hero.webp',
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];
