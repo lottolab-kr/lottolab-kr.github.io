@@ -30,7 +30,11 @@ manifest.webmanifest, sw.js, icons/   PWA(홈 화면에 설치) 설정
 
 ## 배포 (GitHub Pages)
 
-저장소 **Settings → Pages**에서 Source를 "Deploy from a branch", Branch를 `main` / `(root)`로 설정하면 `https://<계정>.github.io/lotto-number-lab/`에서 서비스됩니다.
+- 서비스 주소: **https://lottolab-kr.github.io/**
+- 저장소: `lottolab-kr/lottolab-kr.github.io` (조직 소유)
+- 저장소 이름이 조직명과 같은 `<조직명>.github.io` 형태라 하위 경로 없이 루트에서 서비스됩니다.
+- 설정 위치: **Settings → Pages** → Source "Deploy from a branch" → Branch `main` / `(root)`
+- `main`에 푸시하면 1~2분 내 자동 재배포됩니다.
 
 ## 광고 배너
 
@@ -38,7 +42,7 @@ manifest.webmanifest, sw.js, icons/   PWA(홈 화면에 설치) 설정
 
 ## 앱스토어 배포로 가는 다음 단계
 
-1. 지금 이 정적 사이트를 GitHub Pages(또는 Vercel/Netlify)로 배포 — **완료 후 다음 단계**
+1. ~~정적 사이트를 GitHub Pages로 배포~~ — **완료** (https://lottolab-kr.github.io/)
 2. PWA로 설치 확인 (모바일 브라우저에서 "홈 화면에 추가") — manifest/서비스 워커는 이미 포함되어 있습니다
 3. Android: PWA를 TWA(Trusted Web Activity)로 감싸 Google Play Console(1회 25달러)에 등록
 4. iOS: Capacitor 등으로 감싸 Apple Developer Program(연 99달러) 계정으로 App Store Connect에 제출
